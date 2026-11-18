@@ -81,6 +81,7 @@ src/game/Tutorial.js            tutorial board + its 2 stars
 src/game/Stars.js               collectible stars (drawn in the overlay)
 src/game/ShaftDecor.js          tile wall (lights up), side walls, glass shelves, neon, wall logo, sign plates
 src/game/CanCharacter.js        the can (brand label texture), roll/squash/blink
+src/game/BottleCap.js           3D crown-cork hazard (replaces the saw blades)
 src/game/Drips.js, Puddles.js   fridge condensation: drips, wall runs, puddles on shelves
 src/game/SheetParticles.js      water splash on hits/pickups
 src/game/CameraController.js    framing per screen shape (see §5)
@@ -136,11 +137,16 @@ Joy-Con (`SensorProcessor` + `GyroCalibration`), port of the original:
 
 Physics is unchanged from CAN DROP (2D X/Y, shaft x ∈ [−6, 6]): GRAVITY 22, MAX_FALL 18,
 SHELF_THICK 0.35, SHELF_DEPTH 1.8, CAN_R 0.46, maxSpeed 9.5 × 0.7, accel 16, friction 7,
-circle-vs-box collision, moving shelves carry the can, saws: static / line / orbit.
-Saw hit: knockback 7, invulnerable 1.2 s, slow 0.8 s, water splash, camera shake 0.6.
+circle-vs-box collision, moving shelves carry the can, hazards: static / line / orbit
+(level data still calls them `saws`). They are drawn as spinning **3D Heineken bottle caps**
+(`BottleCap.js`: domed printed top + modelled 21-flute skirt + rim, tilted slightly, slow spin 1.2 rad/s so the print stays readable).
+Hit: knockback 7, invulnerable 1.2 s, slow 0.8 s, water splash, camera shake 0.6.
+Hazard paths must never overlap a shelf (keep ≥ 0.08 m clearance for the cap radius,
+including moving shelves); level 2 paths were re-routed for this. Puddles are clamped
+(`Puddles._fit`) so they never hang over a gap or a shelf edge.
 
 Camera (`CameraController._framing`):
-- Gameplay portrait: distance 11.5, fov 68, follows x ×0.6 (landscape: 13.5, fov 58).
+- Gameplay portrait: distance 10.6, height +5.6, fov 68, ~33° down so the can label shows, follows x ×0.6 (landscape: 12.6, +6.4, fov 58).
 - Tutorial: fixed and centred, fits the 12 m board, raised **20°** (drone view).
 - Can is straight (lid faces the camera). The user rejected a 3/4 yaw.
 
@@ -149,18 +155,21 @@ Camera (`CameraController._framing`):
 ## 6. Look (key visual: green tiled fridge on a stage)
 
 - **Tile wall**: glossy dark-green rounded tiles; tiles behind the can's path turn white.
-- **Shelves**: wet glass with droplets, neon line under the front edge; moving shelves lighter.
-- **Side walls**: green with droplets and one thick neon strip on the inner edge.
+- **Shelves**: wet glass with a few very subtle droplets (bright/dense specks read as dirt), neon line under the front edge; moving shelves lighter.
+- **Side walls**: plain glossy green (no speckle texture) and one thick neon strip on the inner edge.
   Strips are thick on purpose: sub-pixel neon lines flickered when the camera moved.
 - **Neon intensity** (`neonMat()` in ShaftDecor, HDR × 2.6): user-tuned, currently side
   `0.3`, shelf `0.5`, soft top line `0.45`.
 - **Can**: Heineken label from `public/brand/can-label.webp` (kept to its aspect, the rest
   clamps to the label's green); generic aluminium lid unless `can-lid` is supplied.
-- **Stars**: red, white halo (a red halo over green reads orange), drawn in the **overlay**.
+- **Stars**: red with a **white outline** like the Heineken logo star (a larger thin white star
+  behind the red one), white halo (a red halo over green reads orange), drawn in the **overlay**.
+  DOM star icons (HUD, tutorial, result) use the same red + white outline.
 - **Wall logo**: `heineken-house-logo` on the wall (gameplay only), drawn in the overlay.
 - **Backdrop**: stage image, cover-fit. Fog tinted teal.
 - **Fridge FX**: drips swelling under shelf edges and falling (fresnel, almost clear),
-  wall runs, puddles on shelves (seeded at load, grow where drips land), ice vapour in post.
+  wall runs, puddles on shelves (dark wet sheen, never pale/white; seeded at load, grow where
+  drips land), ice vapour in post.
 - **No text signs** in the world and no "GOAL!"/"OUCH!" pop-ups.
 
 Post-processing (`PostFX`, quality `high` on desktop, `low` on touch devices):
@@ -185,6 +194,7 @@ hands slide-in, result glow, hearts/stars pops, countdown).
 | `heineken-house-logo` | supplied (PNG, background removed) |
 | `age-badge` | supplied (21+ / Enjoy Responsibly) |
 | `can-label` | supplied (webp) |
+| `bottle-cap` | supplied (webp) – top print of the 3D cap hazards |
 | `can-lid` | missing → generic lid |
 | `sync-challenge-logo` | missing → text + can-outline placeholder |
 | `cheers-cans` | missing → generic clinking cans |

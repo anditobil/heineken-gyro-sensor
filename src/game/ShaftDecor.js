@@ -38,7 +38,10 @@ function rng(seed) {
 }
 
 const texCache = new Map();
-/** Base colour sprinkled with small water droplets (highlight + soft shadow). */
+/**
+ * Base colour with a few tiny condensation beads. Kept very subtle on purpose: bright,
+ * dense specks read as dirt, not water.
+ */
 export function dropletTexture(base, seed = 7, density = 140) {
   const key = `${base}:${seed}:${density}`;
   if (texCache.has(key)) return texCache.get(key);
@@ -47,12 +50,12 @@ export function dropletTexture(base, seed = 7, density = 140) {
   g.fillRect(0, 0, 256, 256);
   const r = rng(seed);
   for (let i = 0; i < density; i++) {
-    const x = r() * 256, y = r() * 256, s = 0.8 + r() * r() * 4.5;
-    g.fillStyle = 'rgba(0,30,10,0.28)';
+    const x = r() * 256, y = r() * 256, s = 0.6 + r() * r() * 3;
+    g.fillStyle = 'rgba(0,30,10,0.12)';
     g.beginPath(); g.arc(x + s * 0.35, y + s * 0.45, s, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(235,255,240,0.55)';
+    g.fillStyle = 'rgba(225,255,235,0.14)';
     g.beginPath(); g.arc(x, y, s, 0, Math.PI * 2); g.fill();
-    g.fillStyle = 'rgba(255,255,255,0.9)';
+    g.fillStyle = 'rgba(255,255,255,0.42)';
     g.beginPath(); g.arc(x - s * 0.35, y - s * 0.35, Math.max(0.5, s * 0.3), 0, Math.PI * 2); g.fill();
   }
   const t = new THREE.CanvasTexture(c);
@@ -142,10 +145,8 @@ export class TileWall {
 
 export function buildSideWalls(world, disposables, { top, bottom, half, depth }) {
   const height = top - bottom;
-  const tex = dropletTexture('#145f24', 3, 90).clone();
-  tex.repeat.set(1, height / 2);
-  tex.needsUpdate = true;
-  const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.4, metalness: 0.1, envMapIntensity: 0.15 });
+  // Plain glossy green: the speckle texture read as dirt on the big side surfaces.
+  const mat = new THREE.MeshStandardMaterial({ color: '#145f24', roughness: 0.35, metalness: 0.1, envMapIntensity: 0.2 });
   const geo = new THREE.BoxGeometry(0.8, height, depth);
   // Thick enough to never be thinner than a pixel (thin lines flicker when the camera moves).
   const stripGeo = new THREE.BoxGeometry(0.12, height, 0.12);
@@ -160,16 +161,16 @@ export function buildSideWalls(world, disposables, { top, bottom, half, depth })
     inner.position.set(s * (half + 0.04), (top + bottom) / 2, depth / 2);
     world.add(inner);
   }
-  disposables.push(tex, mat, geo, stripGeo, strip);
+  disposables.push(mat, geo, stripGeo, strip);
 }
 
 // ───────────────────────── shelves ─────────────────────────
 
 export function shelfMaterials(disposables) {
-  const capTex = dropletTexture('#3f7f4c', 11, 160).clone();
+  const capTex = dropletTexture('#3f7f4c', 11, 70).clone();
   capTex.repeat.set(2.5, 0.6);
   capTex.needsUpdate = true;
-  const bodyTex = dropletTexture('#17602a', 5, 120).clone();
+  const bodyTex = dropletTexture('#17602a', 5, 50).clone();
   bodyTex.repeat.set(3, 0.3);
   bodyTex.needsUpdate = true;
   const goalCanvas = (() => {

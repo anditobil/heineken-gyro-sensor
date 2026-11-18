@@ -11,6 +11,7 @@ show a placeholder, so the game works without them.
 | `sync-challenge-logo` | Main menu, under "READY TO PLAY?" | 800 × 450, transparent |
 | `cheers-cans` | Success screen: two cans clinking, held by hands | 600 × 800, transparent |
 | `can-label` | Wrap-around label of the can in the game (texture, wraps once around) | 1024 × 384 |
+| `bottle-cap` | Spinning hazards in the game (3D crown cork; the flat printed top is mapped, the teeth are modelled) | ~1250 × 1250, transparent, cap centred, flat top radius ≈ 44% of the width |
 | `can-lid` | Can lid, faces the camera | 512 × 512, round artwork centred |
 | `can-side` | The can lying on the board under the game box (it slides with the game) | 600 × 500, transparent, can lying down, lid toward the viewer |
 

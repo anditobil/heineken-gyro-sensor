@@ -61,14 +61,18 @@ export class Tutorial {
     const glowMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.14, depthWrite: false });
     const starGeo = starGeometry();
     const glowGeo = new THREE.CircleGeometry(0.62, 40);
-    drop.disposables.push(starMat, glowMat, starGeo, glowGeo);
+    // White outline like the star in the Heineken logo: a slightly larger, thinner white star
+    // right behind the red one (still 3D when it spins).
+    const outlineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4, metalness: 0.0, emissive: 0xffffff, emissiveIntensity: 0.15 });
+    const outlineGeo = starGeometry(0.42 * 1.13, 0.18 * 1.13, 0.09);
+    drop.disposables.push(starMat, glowMat, starGeo, glowGeo, outlineMat, outlineGeo);
 
     for (const side of [-1, 1]) {
       const g = new THREE.Group();
       const spin = new THREE.Group();
       const star = new THREE.Mesh(starGeo, starMat);
       star.castShadow = true;
-      spin.add(star);
+      spin.add(star, new THREE.Mesh(outlineGeo, outlineMat));
       const glow = new THREE.Mesh(glowGeo, glowMat);
       glow.position.z = -0.25;
       g.add(spin, glow);

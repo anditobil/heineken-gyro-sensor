@@ -35,8 +35,10 @@ export class CameraController {
       const pitch = (20 * Math.PI) / 180;
       return { dist: dist * Math.cos(pitch), fov: 60, kx: 0, kl: 0, up: dist * Math.sin(pitch), down: 0.6 };
     }
-    if (aspect >= 0.8) return { dist: 13.5, fov: 58, kx: 0.35, kl: 0.45, up: 2.2, down: -1.6 };
-    return { dist: 11.5, fov: 68, kx: 0.6, kl: 0.6, up: 2.2, down: -1.6 };
+    // Gameplay: camera raised (~33° down onto the can, was ~18°) so the can's labelled side
+    // shows, not only its lid.
+    if (aspect >= 0.8) return { dist: 12.6, fov: 58, kx: 0.35, kl: 0.45, up: 6.4, down: -1.6 };
+    return { dist: 10.6, fov: 68, kx: 0.6, kl: 0.6, up: 5.6, down: -1.4 };
   }
 
   shake(amount) {

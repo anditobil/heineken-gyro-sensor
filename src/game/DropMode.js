@@ -3,7 +3,8 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { DROP_LEVELS, SHAFT_WIDTH } from './dropLevels.js';
 import { Strip } from './Strip.js';
 import { SheetParticles } from './SheetParticles.js';
-import { stripTexture, sawGeometry } from './Textures.js';
+import { stripTexture } from './Textures.js';
+import { createBottleCap } from './BottleCap.js';
 import { TileWall, buildSideWalls, shelfMaterials, buildShelf, buildWallLogo } from './ShaftDecor.js';
 import { HOUSE_THEME } from './theme.js';
 import { approach, clamp } from '../core/MathUtils.js';
@@ -129,18 +130,18 @@ export class DropMode {
     // Wet shelves from the start
     this.puddles.seed(this.shelves, SHELF_DEPTH);
 
-    // Saws + rails on the back wall
+    // Hazards: spinning 3D bottle caps (were saw blades) + rails on the back wall
     for (const c of cfg.saws) {
       const g = new THREE.Group();
-      const blade = new THREE.Mesh(sawGeometry(), this.sawMat);
+      // A slight tilt shows the cap's crimped skirt, so it reads as a 3D object.
+      const tilt = new THREE.Group();
+      tilt.rotation.set(0.32, -0.28, 0);
+      const blade = createBottleCap(); // spins around its own axis (local Z)
       blade.scale.setScalar(c.r);
-      blade.castShadow = true;
-      const hubGeo = new THREE.CylinderGeometry(c.r * 0.22, c.r * 0.22, 0.14, 16).rotateX(Math.PI / 2);
-      const hub = new THREE.Mesh(hubGeo, this.hubMat);
-      g.add(blade, hub);
+      tilt.add(blade);
+      g.add(tilt);
       g.position.set(c.x, c.y, 0);
       this.world.add(g);
-      this.disposables.push(hubGeo);
       const railZ = -SHELF_DEPTH / 2 - 0.18; // in front of the wall tiles
       if (c.type === 'line') {
         const len = Math.hypot(c.x2 - c.x, c.y2 - c.y);
@@ -442,7 +443,7 @@ export class DropMode {
 
   /** Per-frame visuals; returns the can's world position. */
   update(dt) {
-    for (const s of this.saws) s.blade.rotation.z -= dt * 12;
+    for (const s of this.saws) s.blade.rotation.z -= dt * 1.2; // slow spin: the print stays readable
     this.sheets.update(dt, this.time);
     this.tiles?.update(dt);
     this.stars.animate(dt);

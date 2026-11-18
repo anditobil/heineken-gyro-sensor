@@ -34,17 +34,19 @@ export class Puddles {
     const geo = new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2);
     this.alphaTex = blobTexture();
     this.mat = new THREE.MeshStandardMaterial({
-      color: 0xd6f1ff, roughness: 0.0, metalness: 0.15, transparent: true, opacity: 1,
-      alphaMap: this.alphaTex, envMapIntensity: 1.6, depthWrite: false,
+      // Wet patch, like real water on a surface: a little darker than the shelf plus a
+      // mirror-like sheen, never a pale/white blotch.
+      color: 0x0b3a18, roughness: 0.0, metalness: 0.2, transparent: true, opacity: 1,
+      alphaMap: this.alphaTex, envMapIntensity: 2.2, depthWrite: false,
       polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
     });
-    // Water film: nearly invisible straight on, more visible (reflective) at grazing angles.
+    // Water film: soft darkening, a bit stronger (more reflective) at grazing angles.
     this.mat.onBeforeCompile = (shader) => {
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <dithering_fragment>',
         `#include <dithering_fragment>
         float fres = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 1.6);
-        gl_FragColor.a = diffuseColor.a * clamp(0.1 + fres * 0.55, 0.0, 0.6);`,
+        gl_FragColor.a = diffuseColor.a * clamp(0.22 + fres * 0.2, 0.0, 0.42);`,
       );
     };
     this.mesh = new THREE.InstancedMesh(geo, this.mat, MAX);
@@ -61,6 +63,7 @@ export class Puddles {
   /** Wet shelves from the start: a couple of puddles per shelf. */
   seed(shelves, depth) {
     this.items = [];
+    this.depth = depth;
     for (const s of shelves) {
       if (s.goal) continue;
       const w = s.x1 - s.x0;
@@ -76,11 +79,32 @@ export class Puddles {
   /** New puddle (or a grown one) on shelf `s` at world x, z. */
   add(s, x, z, grown = false) {
     if (this.items.length >= MAX) this.items.shift(); // oldest dries up
-    const r = 0.14 + Math.random() * 0.22;
-    this.items.push({
-      shelf: s, lx: x - s.off, z, r, k: grown ? 1 : 0.05,
+    const p = {
+      shelf: s, lx: x - s.off, z, r: 0.14 + Math.random() * 0.22, k: grown ? 1 : 0.05,
       sx: 0.7 + Math.random() * 0.8, rot: Math.random() * Math.PI,
-    });
+    };
+    if (this._fit(p)) this.items.push(p);
+  }
+
+  /**
+   * Keep the whole puddle on its shelf: never over a gap or past the front/back edge.
+   * Uses the puddle's full-grown extent (the larger of its two radii, any rotation).
+   * Returns false if the shelf is too small for it.
+   */
+  _fit(p) {
+    const s = p.shelf;
+    const margin = 0.06;
+    const halfW = (s.x1 - s.x0) / 2 - margin;
+    const halfD = (this.depth ?? 1.8) / 2 - margin;
+    const extent = () => p.r * Math.max(p.sx, 1);
+    // shrink if the shelf is narrower than the puddle
+    const maxR = Math.min(halfW, halfD) / Math.max(p.sx, 1);
+    if (maxR < 0.06) return false;
+    if (p.r > maxR) p.r = maxR;
+    const e = extent();
+    p.lx = Math.min(s.x1 - margin - e, Math.max(s.x0 + margin + e, p.lx));
+    p.z = Math.min(halfD - e, Math.max(-halfD + e, p.z));
+    return true;
   }
 
   /** A drip landed here: grow an existing nearby puddle, or start a new one. */
@@ -90,6 +114,7 @@ export class Puddles {
     if (near) {
       near.r = Math.min(0.55, near.r + 0.02);
       near.k = Math.min(near.k, 0.85); // small ripple: shrink a touch, then regrow
+      this._fit(near); // growing must not push it over the edge
     } else {
       this.add(s, x, z);
     }

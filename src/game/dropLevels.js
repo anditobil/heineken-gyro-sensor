@@ -51,11 +51,12 @@ export const DROP_LEVELS = [
     ],
     saws: [
       { type: 'static', x: 4.4, y: -3.2, r: 0.8 },
-      { type: 'line', x: -0.5, y: -10.9, x2: -0.5, y2: -7.9, r: 0.7, speed: 1.4 },
-      { type: 'orbit', x: 0, y: -19.0, radius: 1.7, r: 0.5, speed: 1.6 },
-      { type: 'line', x: 1.4, y: -25.9, x2: 1.4, y2: -22.9, r: 0.7, speed: 1.8 },
-      { type: 'line', x: 2, y: -31.4, x2: 2, y2: -28.4, r: 0.65, speed: 1.7 },
-      { type: 'line', x: -1, y: -31.4, x2: -1, y2: -28.4, r: 0.65, speed: 1.7, phase: -0.8 },
+      // Hazard paths keep ~0.08 m clear of every shelf (the 3D caps must never pass through one).
+      { type: 'line', x: -0.5, y: -9.72, x2: -0.5, y2: -7.9, r: 0.7, speed: 1.4 },
+      { type: 'orbit', x: 0, y: -17.9, radius: 1.4, r: 0.5, speed: 1.6 },
+      { type: 'line', x: 1.4, y: -24.72, x2: 1.4, y2: -22.9, r: 0.7, speed: 1.8 },
+      { type: 'line', x: 2, y: -30.27, x2: 2, y2: -28.4, r: 0.65, speed: 1.7 },
+      { type: 'line', x: -1, y: -30.27, x2: -1, y2: -28.4, r: 0.65, speed: 1.7, phase: -0.8 },
     ],
     signs: [
       { x: -3, y: 2.3, text: 'Saw Tower' },
